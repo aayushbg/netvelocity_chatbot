@@ -1,0 +1,22 @@
+[
+  {
+    "name": "metric",
+    "pattern": "(\\bdownload\\ speed\\b|\\bupload\\ speed\\b|\\blatency\\b|\\bjitter\\b|\\bbrowse\\ time\\b|\\bpacket\\ loss\\b)"
+  },
+  {
+    "name": "geo",
+    "pattern": "(\\bAhmedabad\\b|\\bBengaluru\\b|\\bPan\\ India\\b)"
+  },
+  {
+    "name": "app",
+    "pattern": "(\\bHelloJio\\ SpeedTest\\b|\\bNV\\ SpeedTest\\b|\\bAll\\ apps\\b)"
+  },
+  {
+    "name": "time",
+    "pattern": "(\\blast\\ 7\\ days\\b|\\blast\\ 30\\ days\\b)"
+  },
+  {
+    "name": "top_n",
+    "pattern": "(\\bTop\\ 5\\b|\\bTop\\ 10\\b|\\bTop\\ 20\\b|\\bBottom\\ 10\\b|\\bBottom\\ 20\\b)"
+  }
+]

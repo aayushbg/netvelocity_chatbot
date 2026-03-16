@@ -1,0 +1,44 @@
+[
+  {
+    "tag_name": "entity",
+    "ids_to_tags": {
+      "1": "B-app",
+      "2": "I-app",
+      "3": "L-app",
+      "4": "U-app",
+      "5": "B-geo",
+      "6": "I-geo",
+      "7": "L-geo",
+      "8": "U-geo",
+      "9": "B-metric",
+      "10": "I-metric",
+      "11": "L-metric",
+      "12": "U-metric",
+      "13": "B-time",
+      "14": "I-time",
+      "15": "L-time",
+      "16": "U-time",
+      "0": "O"
+    },
+    "tags_to_ids": {
+      "B-app": 1,
+      "I-app": 2,
+      "L-app": 3,
+      "U-app": 4,
+      "B-geo": 5,
+      "I-geo": 6,
+      "L-geo": 7,
+      "U-geo": 8,
+      "B-metric": 9,
+      "I-metric": 10,
+      "L-metric": 11,
+      "U-metric": 12,
+      "B-time": 13,
+      "I-time": 14,
+      "L-time": 15,
+      "U-time": 16,
+      "O": 0
+    },
+    "num_tags": 17
+  }
+]

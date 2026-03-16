@@ -1,0 +1,129 @@
+version: "3.1"
+
+nlu:
+- intent: rank_metrics
+  examples: |
+    - [Top 5](topN) [cities](dimension) by [download speed](metric) in (last 30 days)[time]
+    - [Top 3](topN) [states](dimension) by [upload speed](metric) in (last 90 days)[time]
+    - Rank [cities](dimension) by [upload speed](metric) in (last 7 days)[time]
+
+
+- intent: get_metrics
+  examples: |
+    - Give me the [download speed](metric) for City [Ahmedabad](geo) during [last 30 days](time) using [NV SpeedTest](app)
+    - Show [download speed](metric) for City [Bengaluru](geo) during [last 30 days](time) using [NV SpeedTest](app)
+    - What is the [download speed](metric) in [Ahmedabad](geo) for [last 30 days](time)
+    - What is the [median](agg) [download speed](metric) in [Ahmedabad](geo) for [last 30 days](time)
+    - [median](agg) [upload speed](metric) in [Ahmedabad](geo) during [last 30 days](time)
+
+- lookup: metric
+  examples: |
+    - download speed
+    - upload speed
+    - latency
+    - jitter
+    - browse time
+    - packet loss
+
+- lookup: geo
+  examples: |
+    - Ahmedabad
+    - Bengaluru
+    - Pan India
+  
+- lookup: app
+  examples: |
+    - HelloJio SpeedTest
+    - NV SpeedTest
+    - All apps
+
+- lookup: agg
+  examples: |
+    - Median
+    - Average
+    - avg
+    - P90
+    - Minimum
+    - min
+    - Maximum
+    - max
+
+- lookup: time
+  examples: |
+    - last 7 days
+    - last 30 days
+    - last 90 days
+    - last 60 days
+
+- lookup: topN
+  examples: |
+    - Top 3
+    - Top 5
+    - Top 10
+    - Top 20
+    - Bottom 10
+    - Bottom 20
+
+- regex: topN
+  examples: |
+    - \b[Tt]op\s+\d+\b
+    - \b[Bb]ottom\s+\d+\b
+
+- lookup: dimension
+  examples: |
+    - states
+    - cities
+    - JCs
+    - Zones
+    - Jio States
+
+- intent: greet
+  examples: |
+    - hey
+    - hello
+    - hi
+    - hello there
+    - good morning
+    - good evening
+    - hey there
+    - good afternoon
+
+- intent: goodbye
+  examples: |
+    - bye
+    - goodbye
+    - see you later
+    - have a nice day
+
+- intent: affirm
+  examples: |
+    - yes
+    - indeed
+    - of course
+    - correct
+
+- intent: deny
+  examples: |
+    - no
+    - never
+    - I don't think so
+    - not really
+
+- intent: mood_great
+  examples: |
+    - perfect
+    - great
+    - amazing
+    - wonderful
+
+- intent: mood_unhappy
+  examples: |
+    - my day was horrible
+    - I am sad
+    - unhappy
+    - not good
+
+- intent: bot_challenge
+  examples: |
+    - are you a bot?
+    - are you a human?
