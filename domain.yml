@@ -10,6 +10,7 @@ intents:
   - bot_challenge
   - get_metrics
   - rank_metrics
+  - threshold_metrics
 
 entities:
   - metric
@@ -24,6 +25,7 @@ entities:
   - topN
   - dimension
   - granularity
+  - operator
 
 slots:
   metric:
@@ -86,6 +88,11 @@ slots:
     mappings:
       - type: from_entity
         entity: granularity
+  operator:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: operator
 
 responses:
   utter_greet:

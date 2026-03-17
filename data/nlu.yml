@@ -16,12 +16,25 @@ nlu:
     - What is the [median](agg) [download speed](metric) in [Ahmedabad](geo) for [last 30 days](time)
     - [median](agg) [upload speed](metric) in [Ahmedabad](geo) during [last 30 days](time)
 
+- intent: threshold_metrics
+  examples: |
+    - Which locations had [download speed](metric) [<](operator) [60](threshold) in [last 7 days](time)?
+    - Which locations had [upload speed](metric) [<](operator) [15](threshold) in [last 30 days](time)?
+    - Locations with [RSRP](metric) [<](operator) [-110](threshold) in [last 7 days](time)?
+    - Areas where [SINR](metric) [<](operator) [0](threshold) dB in [last 15 days](time)?
+    - Which [cities](dimension) had [latency](metric) [>](operator) [29](threshold) in [last 7 days](time)?
+    - Alert if [packet loss](metric) [>](operator) [0.75](threshold) % in any [JC](dimension) during [last 30 days](time)
+
 - lookup: metric
   examples: |
     - download speed
     - upload speed
     - latency
     - jitter
+    - rsrp
+    - RSRP
+    - SINR
+    - sinr
     - browse time
     - packet loss
 
@@ -76,6 +89,15 @@ nlu:
     - JCs
     - Zones
     - Jio States
+    - JC
+    - city
+    - state
+    - zone
+    - jio state
+  
+- regex: operator
+  examples: |
+    - [<>]
 
 - intent: greet
   examples: |
