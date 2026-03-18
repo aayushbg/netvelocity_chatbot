@@ -45,7 +45,33 @@ nlu:
 
 - intent: compare_metrics
   examples: |
-    - Compare [jitter](metric) on LTE vs NR in City: Ahmedabad for last 7 days.
+    - Compare [jitter](metric) on LTE vs NR in City: Ahmedabad for last 7 days.    
+    - compare [download speed](metric) vs [upload speed](metric) in Ahmedabad for [last 7 days](time)
+    - compare [download speed](metric) on [LTE](network) vs [NR](network) in Ahmedabad
+    - compare [latency](metric) between [3G](network) and [LTE](network) for [last 30 days](time)
+    - compare [download speed](metric) vs [upload speed](metric) in [Ahmedabad](geo) for [last 7 days](time)
+    - compare [latency](metric) and [jitter](metric) in [Mumbai](geo) for [last 30 days](time)
+    - compare [download speed](metric) on [LTE](tech) vs [NR NSA](tech) in [Delhi](geo) for [last 7 days](time)
+    - compare [latency](metric) between [3G](tech) and [LTE](tech) in [Pune](geo) for [last 30 days](time)
+    - compare [download speed](metric) on band [1800](band) vs [2300](band) in [Ahmedabad](geo) for [last 7 days](time)
+    - compare [latency](metric) on band [n78](band) vs [n28](band) in [Mumbai](geo) for [last 30 days](time)
+    - compare [download speed](metric) on [NV SpeedTest](app) vs [HelloJio Speedtest](app) in [Delhi](geo) for [last 7 days](time)
+    - compare [latency](metric) between [NV SpeedTest](app) and [HelloJio Speedtest](app) in [Pune](geo) for [last 30 days](time)
+    - compare [download speed](metric) in [last 7 days](time) vs [last 30 days](compare_time) in [Ahmedabad](geo)
+    - compare [latency](metric) between [last 15 days](time) and [last 30 days](compare_time) in [Mumbai](geo)
+    - compare [download speed](metric) on [LTE](tech) vs [NR NSA](tech) in [Ahmedabad](geo) for [last 7 days](time)
+    - compare [latency](metric) on band [1800](band) vs [2300](band) in [Delhi](geo) for [last 30 days](time)
+    - compare [download speed](metric) on [NV SpeedTest](app) vs [HelloJio Speedtest](app) in [Pune](geo) for [last 7 days](time)
+    - compare [download speed](metric) on [LTE](tech) vs [NR NSA](tech) on band [1800](band) vs [2300](band) in [Ahmedabad](geo) for [last 7 days](time)
+    - compare [latency](metric) on [WiFi](tech) vs [LTE](tech) using [NV SpeedTest](app) in [Mumbai](geo) for [last 30 days](time)
+    - how does [download speed](metric) compare between LTE and NR NSA in [Ahmedabad](geo) for [last 7 days](time)
+    - show difference in [latency](metric) for LTE vs WiFi in [Mumbai](geo) for [last 30 days](time)
+    - compare performance of LTE vs NR NSA for [download speed](metric) in [Delhi](geo) for [last 7 days](time)
+    - [download speed](metric) comparison LTE vs NR NSA in [Ahmedabad](geo) for [last 7 days](time)
+    - LTE vs NR NSA [latency](metric) comparison in [Mumbai](geo) for [last 30 days](time)
+    - compare download vs upload speed in Ahmedabad last 7 days
+    - lte vs nr latency in Mumbai last 30 days
+    - band 1800 vs 2300 speed in Delhi last 7 days 
 
 - lookup: metric
   examples: |

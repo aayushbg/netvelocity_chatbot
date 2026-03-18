@@ -163,11 +163,11 @@ class ActionKpiRouter(Action):
 
     def handle_get_metrics(self, dispatcher, tracker):
 
-        metric = tracker.get_slot("metric")
-        geo = tracker.get_slot("geo")
-        time = tracker.get_slot("time")
-        app = tracker.get_slot("app")
-        agg = tracker.get_slot("agg")
+        metric = tracker.get_slot("metric")[0] if tracker.get_slot("metric") is not None else None
+        geo = tracker.get_slot("geo")[0] if tracker.get_slot("geo") is not None else None
+        time = tracker.get_slot("time")[0] if tracker.get_slot("time") is not None else None
+        app = tracker.get_slot("app")[0] if tracker.get_slot("app") is not None else None
+        agg = tracker.get_slot("agg")[0] if tracker.get_slot("agg") is not None else None
 
         if not metric:
             dispatcher.utter_message(text="Please specify which metric you want.")
@@ -290,8 +290,11 @@ class ActionKpiRouter(Action):
 
     def handle_rank_metrics(self, dispatcher, tracker):
 
-        metric = tracker.get_slot("metric")
-        topN = tracker.get_slot("topN")
+        metric = tracker.get_slot("metric")[0] if tracker.get_slot("metric") is not None else None
+        topN = tracker.get_slot("topN")[0] if tracker.get_slot("topN") is not None else None
+        dimension = tracker.get_slot("dimension")[0] if tracker.get_slot("dimension") is not None else None
+        time = tracker.get_slot("time")[0] if tracker.get_slot("time") is not None else None
+
         logger.debug(f"topN - {topN}")
         order = "DESC"
         if(topN.split()[0] in ['bottom', 'lowest'] and metric in ['latency']):
@@ -301,9 +304,7 @@ class ActionKpiRouter(Action):
         elif(metric in ['latency']):
             order = "ASC"
         topN = int(topN.split()[1])
-        dimension = tracker.get_slot("dimension")
         logger.debug(f"dimension - {dimension}")
-        time = tracker.get_slot("time")
 
         time_condition = parse_time_condition(time)
 
@@ -384,11 +385,10 @@ class ActionKpiRouter(Action):
 
     def handle_threshold_metrics(self, dispatcher, tracker):
 
-        metric = tracker.get_slot("metric")
-        # operator = tracker.get_slot("operator")
-        threshold = tracker.get_slot("threshold")
-        dimension = tracker.get_slot("dimension")
-        time = tracker.get_slot("time")
+        metric = tracker.get_slot("metric")[0] if tracker.get_slot("metric") is not None else None
+        threshold = tracker.get_slot("threshold")[0] if tracker.get_slot("threshold") is not None else None
+        dimension = tracker.get_slot("dimension")[0] if tracker.get_slot("dimension") is not None else None
+        time = tracker.get_slot("time")[0] if tracker.get_slot("time") is not None else None
         time_condition = parse_time_condition(time)
 
         user_message = tracker.latest_message.get("text")
@@ -491,92 +491,121 @@ class ActionKpiRouter(Action):
 
     def handle_compare_metrics(self, dispatcher, tracker):
 
-        metric = tracker.get_slot("metric")
-        # operator = tracker.get_slot("operator")
-        threshold = tracker.get_slot("threshold")
-        dimension = tracker.get_slot("dimension")
-        time = tracker.get_slot("time")
-        time_condition = parse_time_condition(time)
+        metric = tracker.get_slot("metric") if tracker.get_slot("metric") is not None else ["empty"]
+        time = tracker.get_slot("time") if tracker.get_slot("time") is not None else ["empty"]
+        geo = tracker.get_slot("geo") if tracker.get_slot("geo") is not None else ["empty"]
+        app = tracker.get_slot("app")[0] if tracker.get_slot("app") is not None else ["empty"]
+        band = tracker.get_slot("band")[0] if tracker.get_slot("band") is not None else ["empty"]
+        tech = tracker.get_slot("tech")[0] if tracker.get_slot("tech") is not None else ["empty"]
 
-        user_message = tracker.latest_message.get("text")
-        operator = '='
-        for i in len(user_message):
-            if(i + 1 < len(user_message) and (user_message[i:i+2] == '<=' or user_message[i:i+2] == '>=')):
-                operator = str(user_message[i+i+2])
-                break
-            elif(i in ['<', '>', '=']):
-                operator = str(i)
-                break
-
-
-        logger.debug(f"ThresholdMetrics-Metric: {metric}")
-        logger.debug(f"ThresholdMetrics-Dimension: {dimension}")
-        logger.debug(f"ThresholdMetrics-Operator: {operator}")
-        logger.debug(f"ThresholdMetrics-Threshold: {threshold}")
-        logger.debug(f"ThresholdMetrics-Time: {time_condition}")
-
-        if not metric:
-            dispatcher.utter_message(text="Please specify the metric to compare.")
-            return []
-        
-        metric_column = METRIC_MAP.get(metric.lower())
-
-        if not metric_column:
-            dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
-            return []
-
-
-        filters = f"AND {metric_column} {operator} {threshold}"
-
-        if dimension:
-            dimension_column = DIMENSION_MAP.get(dimension.lower())
-            filters += f""" AND GEOGRAPHYNAME = '{dimension_column}'"""
-
-        if time_condition:
-            filters += " AND "
-            filters += time_condition
-
-        
+        logger.debug(f"CompareMetrics-1")
 
         try:
 
             conn = get_db_connection()
             cursor = conn.cursor()
 
+            logger.debug(f"CompareMetrics-2")
+            data = []
+
+            for i in metric:
+                for j in time:
+                    for k in geo:
+                        for m in app:
+                            for n in band:
+                                for p in tech:
+                                    metric_column = METRIC_MAP.get(i.lower()) if i != "empty" else i
+                                    if not metric:
+                                        dispatcher.utter_message(text="Please specify the metric to compare.")
+                                        return []
             
-            query = f"""
-                SELECT
-                    GEOGRAPHY_NAME,
-                    AVG({metric_column}) AS metric_value
-                FROM netvelocity_kpi_metrics
-                WHERE 1=1 {filters} 
-                GROUP BY GEOGRAPHY_NAME
-                ORDER BY metric_value ASC
-            """
+                                    if not metric_column:
+                                        dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
+                                        return []
+                                    output_metric = OUTPUT_METRIC_MAP.get(metric_column)
+                                    
+                                    time_condition = parse_time_condition(j) if j != "empty" else j
 
-            logger.debug(f"ThresholdMetrics-Query: {query}")
+                                    logger.debug(f"CompareMetrics-3")
 
-            cursor.execute(query)
+                                    filters = " "
+                                    selectors = " "
+                                    if time_condition != "empty":
+                                        filters += f""" AND {time_condition}"""
+                                        logger.debug(f"CompareMetrics-31")
+                                    if k != "empty":
+                                        filters += f" AND GEOGRAPHY_NAME = '{k}'"
+                                        selectors += f"""GEOGRAPHY_NAME AS "Location","""
+                                        logger.debug(f"CompareMetrics-32")
+                                    if m != "empty":
+                                        filters += f" AND TESTTYPE = '{m}'"
+                                        selectors += f"""TESTTYPE AS "App","""
+                                    if n != "empty":
+                                        filters += f" AND BAND = '{n}'"
+                                        selectors += f"""BAND AS Band,"""
+                                    if p != "empty":
+                                        filters += f" AND NETWORKTYPE = '{p}'"
+                                        selectors += f"""NETWORKTYPE AS "Network Type" """
 
-            rows = cursor.fetchall()
+                                    if selectors[-1] == ',':
+                                        selectors = selectors[:len(selectors)-1]
 
-            if not rows:
+                                    logger.debug(f"CompareMetrics-4")
+
+                                    query = f"""
+                                        SELECT 
+                                            AVG({metric_column}) AS "{output_metric}",
+                                            {selectors}
+                                        FROM netvelocity_kpi_metrics 
+                                        WHERE 1=1 {filters}
+                                    """
+                                    logger.debug(f"CompareMetrics-Query: {query}")
+
+                                    cursor.execute(query)
+
+                                    rows = cursor.fetchall()
+
+                                    for r in rows:
+                                        row_data = {}
+
+                                        row_data[output_metric] = round(r[0], 2) if r[0] is not None else None
+
+                                        idx = 1
+
+                                        if k != "empty":
+                                            row_data["Location"] = r[idx]
+                                            idx += 1
+
+                                        if m != "empty":
+                                            row_data["App"] = r[idx]
+                                            idx += 1
+
+                                        if n != "empty":
+                                            row_data["Band"] = r[idx]
+                                            idx += 1
+
+                                        if p != "empty":
+                                            row_data["Network Type"] = r[idx]
+                                            idx += 1
+
+                                        data.append(row_data)
+
+                                    # for r in rows:
+                                    #     data.append({
+                                    #         f"{output_metric}": round(r[0], 2) if r[0] else None,
+                                    #         f"Date": r[1],
+                                    #         f"Location": r[2],
+                                    #         f"App": r[3],
+                                    #         f"Band": r[4],
+                                    #         f"Network Type": r[5],
+                                    #     })
+            
+            if data == []:
                 dispatcher.utter_message(text="No data found for ranking.")
                 return []
-            
-            metric = OUTPUT_METRIC_MAP.get(metric_column)
-            response = f"Locations with {metric} {operator} {threshold}"
-            if time:
-                response += f" during {time}\n\n"
 
-            data = []
-            
-            for r in rows:
-                data.append({
-                    "Location": r[0],
-                    f"{metric}": round(r[1], 2) if r[1] else None,
-                })
-
+                    
+            response = f"Following is your requested comparison: \n\n"
             response += json.dumps(data)
 
             dispatcher.utter_message(text=response)

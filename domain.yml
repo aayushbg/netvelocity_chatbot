@@ -30,67 +30,67 @@ entities:
 
 slots:
   metric:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: metric
   time:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: time
   geo:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: geo
   app:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: app
   tech:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: tech
   band:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: band
   agg:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: agg
   compare_time:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: compare_time
   threshold:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: threshold
   topN:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: topN
   dimension:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: dimension
   granularity:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: granularity
   operator:
-    type: text
+    type: list
     mappings:
       - type: from_entity
         entity: operator
