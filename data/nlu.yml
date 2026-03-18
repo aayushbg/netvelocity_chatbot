@@ -3,10 +3,28 @@ version: "3.1"
 nlu:
 - intent: rank_metrics
   examples: |
-    - [Top 5](topN) [cities](dimension) by [download speed](metric) in (last 30 days)[time]
-    - [Top 3](topN) [states](dimension) by [upload speed](metric) in (last 90 days)[time]
-    - Rank [cities](dimension) by [upload speed](metric) in (last 7 days)[time]
-
+    - [Top 5](topN) [cities](dimension) by [download speed](metric) in [last 30 days](time)
+    - [Top 3](topN) [states](dimension) by [upload speed](metric) in [last 90 days](time)
+    - Rank [cities](dimension) by [latency](metric) in [last 7 days](time)
+    - show [top 5](topN) [cities](dimension) for [jitter](metric) in [last 30 days](time)
+    - give [top 10](topN) [states](dimension) based on [upload speed](metric) in [last 90 days](time)
+    - list [top 3](topN) [cities](dimension) with highest [download speed](metric) in [last 7 days](time)
+    - rank [states](dimension) by [latency](metric) in [last 30 days](time)
+    - sort [cities](dimension) by [jitter](metric) in [last 90 days](time)
+    - order [states](dimension) by [download speed](metric) in [last 7 days](time)
+    - which are the [top 5](topN) [cities](dimension) for [packet loss](metric) in [last 30 days](time)
+    - what are the [top 3](topN) [states](dimension) by [rsrp](metric) in [last 90 days](time)
+    - show best [cities](dimension) for [sinr](metric) in [last 7 days](time)
+    - [top 5](topN) [cities](dimension) with highest [RSRP](metric)
+    - [top 3](topN) [states](dimension) with highest [upload speed](metric)
+    - [top 5](topN) [cities](dimension) by [download speed](metric)
+    - show [top 10](topN) [states](dimension) for [upload speed](metric)
+    - [top 5](topN) [cities](dimension) by [download speed](metric) in [last 15 days](time)
+    - [top 5](topN) [cities](dimension) by [download speed](metric) in [last 60 days](time)
+    - give me [top 5](topN) [cities](dimension) by [download speed](metric)
+    - i want [top 3](topN) [states](dimension) by [upload speed](metric)
+    - by [download speed](metric) show [top 5](topN) [cities](dimension)
+    - by [upload speed](metric) list [top 3](topN) [states](dimension)
 
 - intent: get_metrics
   examples: |
@@ -25,10 +43,21 @@ nlu:
     - Which [cities](dimension) had [latency](metric) [>](operator) [29](threshold) in [last 7 days](time)?
     - Alert if [packet loss](metric) [>](operator) [0.75](threshold) % in any [JC](dimension) during [last 30 days](time)
 
+- intent: compare_metrics
+  examples: |
+    - Compare [jitter](metric) on LTE vs NR in City: Ahmedabad for last 7 days.
+
 - lookup: metric
   examples: |
     - download speed
     - upload speed
+    - dl speed
+    - ul speed
+    - dl rate
+    - ul rate
+    - dlrate
+    - ulrate
+    - coverage
     - latency
     - jitter
     - rsrp
@@ -37,13 +66,64 @@ nlu:
     - sinr
     - browse time
     - packet loss
+    - pckt loss
 
 - lookup: geo
   examples: |
+    - Mumbai
+    - Delhi
+    - Bangalore
+    - Hyderabad
     - Ahmedabad
-    - Bengaluru
+    - Lucknow
+    - Patna
+    - Bhopal
+    - Indore
+    - Ranchi
+    - Raipur
+    - Pune
+    - Chennai
+    - Jaipur
+    - Surat
+    - Vadodara
+    - Nagpur
+    - Kanpur
+    - Varanasi
+    - Coimbatore
+    - Mysore
+    - Kolkata
+    - Guwahati
+    - Chandigarh
     - Pan India
-  
+    - Andhra Pradesh
+    - Arunachal Pradesh
+    - Assam
+    - Bihar
+    - Chhattisgarh
+    - Goa
+    - Gujarat
+    - Haryana
+    - Himachal Pradesh
+    - Jharkhand
+    - Karnataka
+    - Kerala
+    - Madhya Pradesh
+    - Maharashtra
+    - Manipur
+    - Meghalaya
+    - Mizoram
+    - Nagaland
+    - Odisha
+    - Punjab
+    - Rajasthan
+    - Sikkim
+    - Tamil Nadu
+    - Telangana
+    - Tripura
+    - Uttar Pradesh
+    - Uttarakhand
+    - West Bengal
+
 - lookup: app
   examples: |
     - HelloJio SpeedTest

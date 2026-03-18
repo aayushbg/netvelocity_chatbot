@@ -148,6 +148,9 @@ class ActionKpiRouter(Action):
         
         if intent == "threshold_metrics":
             return self.handle_threshold_metrics(dispatcher, tracker)
+        
+        if intent == "compare_metrics":
+            return self.handle_compare_metrics(dispatcher, tracker)
 
         dispatcher.utter_message(text="I couldn't understand the KPI request.")
         return [AllSlotsReset()]
@@ -171,7 +174,8 @@ class ActionKpiRouter(Action):
             return []
 
         metric_column = METRIC_MAP.get(metric.lower())
-        agg = AGG_MAP.get(agg.lower())
+        if agg:
+            agg = AGG_MAP.get(agg.lower())
 
         if not metric_column:
             dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
@@ -254,15 +258,15 @@ class ActionKpiRouter(Action):
             else:
                 value = round(value, 2)
                 metric = OUTPUT_METRIC_MAP.get(metric_column)
-                agg_text = agg if agg else ""
-                response = f"The {agg_text} {metric}"
+                agg_text = str(agg) + " " if agg else ""
+                response = f"The {agg_text}{metric}"
                 if geo:
                     response += f" for {geo}"
                 if time:
                     response += f" during {time}"
                 if app:
                     response += f" using {app}"
-                response += f""" is {value}"""
+                response += f""" is {value}."""
 
             
 
@@ -275,7 +279,8 @@ class ActionKpiRouter(Action):
 
             dispatcher.utter_message(text=f"Database error: {str(e)}")
 
-        return []
+        return [AllSlotsReset()]
+
 
 
 
@@ -307,7 +312,7 @@ class ActionKpiRouter(Action):
         filters = f"""AND GEOGRAPHYNAME = '{dimension_column}'"""
         if time_condition:
             filters += "AND "
-            filters = time_condition
+            filters += time_condition
 
         if not metric:
             dispatcher.utter_message(text="Please specify the metric to compare.")
@@ -354,9 +359,9 @@ class ActionKpiRouter(Action):
             metric = OUTPUT_METRIC_MAP.get(metric_column)
             for r in rows:
                 data.append({
-                    "dimension": r[0],
+                    "Location": r[0],
                     f"{metric}": round(r[1], 2) if r[1] else None,
-                    "rank": r[2]
+                    "Rank": r[2]
                 })
 
             response += json.dumps(data)
@@ -387,13 +392,13 @@ class ActionKpiRouter(Action):
         time_condition = parse_time_condition(time)
 
         user_message = tracker.latest_message.get("text")
-        operator = '<'
-        for i in user_message:
-            if(i == '<'):
-                operator = '<'
+        operator = '='
+        for i in len(user_message):
+            if(i + 1 < len(user_message) and (user_message[i:i+2] == '<=' or user_message[i:i+2] == '>=')):
+                operator = str(user_message[i+i+2])
                 break
-            elif(i == '>'):
-                operator = '>'
+            elif(i in ['<', '>', '=']):
+                operator = str(i)
                 break
 
 
@@ -477,6 +482,114 @@ class ActionKpiRouter(Action):
             dispatcher.utter_message(text=f"Database error: {str(e)}")
 
         return []
+
+
+
+    # --------------------------------
+    # COMPARE METRICS
+    # --------------------------------
+
+    def handle_compare_metrics(self, dispatcher, tracker):
+
+        metric = tracker.get_slot("metric")
+        # operator = tracker.get_slot("operator")
+        threshold = tracker.get_slot("threshold")
+        dimension = tracker.get_slot("dimension")
+        time = tracker.get_slot("time")
+        time_condition = parse_time_condition(time)
+
+        user_message = tracker.latest_message.get("text")
+        operator = '='
+        for i in len(user_message):
+            if(i + 1 < len(user_message) and (user_message[i:i+2] == '<=' or user_message[i:i+2] == '>=')):
+                operator = str(user_message[i+i+2])
+                break
+            elif(i in ['<', '>', '=']):
+                operator = str(i)
+                break
+
+
+        logger.debug(f"ThresholdMetrics-Metric: {metric}")
+        logger.debug(f"ThresholdMetrics-Dimension: {dimension}")
+        logger.debug(f"ThresholdMetrics-Operator: {operator}")
+        logger.debug(f"ThresholdMetrics-Threshold: {threshold}")
+        logger.debug(f"ThresholdMetrics-Time: {time_condition}")
+
+        if not metric:
+            dispatcher.utter_message(text="Please specify the metric to compare.")
+            return []
+        
+        metric_column = METRIC_MAP.get(metric.lower())
+
+        if not metric_column:
+            dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
+            return []
+
+
+        filters = f"AND {metric_column} {operator} {threshold}"
+
+        if dimension:
+            dimension_column = DIMENSION_MAP.get(dimension.lower())
+            filters += f""" AND GEOGRAPHYNAME = '{dimension_column}'"""
+
+        if time_condition:
+            filters += " AND "
+            filters += time_condition
+
+        
+
+        try:
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            
+            query = f"""
+                SELECT
+                    GEOGRAPHY_NAME,
+                    AVG({metric_column}) AS metric_value
+                FROM netvelocity_kpi_metrics
+                WHERE 1=1 {filters} 
+                GROUP BY GEOGRAPHY_NAME
+                ORDER BY metric_value ASC
+            """
+
+            logger.debug(f"ThresholdMetrics-Query: {query}")
+
+            cursor.execute(query)
+
+            rows = cursor.fetchall()
+
+            if not rows:
+                dispatcher.utter_message(text="No data found for ranking.")
+                return []
+            
+            metric = OUTPUT_METRIC_MAP.get(metric_column)
+            response = f"Locations with {metric} {operator} {threshold}"
+            if time:
+                response += f" during {time}\n\n"
+
+            data = []
+            
+            for r in rows:
+                data.append({
+                    "Location": r[0],
+                    f"{metric}": round(r[1], 2) if r[1] else None,
+                })
+
+            response += json.dumps(data)
+
+            dispatcher.utter_message(text=response)
+
+            cursor.close()
+            conn.close()
+
+        except Exception as e:
+
+            dispatcher.utter_message(text=f"Database error: {str(e)}")
+
+        return []
+
 
 
 

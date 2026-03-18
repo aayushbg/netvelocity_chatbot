@@ -25,3 +25,8 @@ rules:
   steps:
     - intent: threshold_metrics
     - action: action_kpi_router
+
+- rule: Handle metric comparison requests
+  steps:
+    - intent: compare_metrics
+    - action: action_kpi_router

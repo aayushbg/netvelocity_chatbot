@@ -11,6 +11,7 @@ intents:
   - get_metrics
   - rank_metrics
   - threshold_metrics
+  - compare_metrics
 
 entities:
   - metric
