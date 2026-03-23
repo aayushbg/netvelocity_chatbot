@@ -6,8 +6,18 @@ import mysql.connector
 from datetime import datetime, timedelta
 import logging
 import json
+import re
+import sys
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
 
 # -------------------------------
 # Metric → DB column mapping
@@ -145,25 +155,37 @@ class ActionKpiRouter(Action):
 
         intent = tracker.latest_message["intent"].get("name")
 
-        if intent == "get_metrics":
-            return self.handle_get_metrics(dispatcher, tracker)
+        logger.info("======NEW REQUEST=======")
+        logger.info(f"[USER]{tracker.latest_message.get('text')}")
+        logger.info(f"[SLOTS]{tracker.current_slot_values()}")
+        logger.info("========================")
 
-        if intent == "rank_metrics":
-            return self.handle_rank_metrics(dispatcher, tracker)
-        
-        if intent == "threshold_metrics":
-            return self.handle_threshold_metrics(dispatcher, tracker)
-        
-        if intent == "compare_metrics":
-            return self.handle_compare_metrics(dispatcher, tracker)
-        
-        if intent == "correlation":
-            return self.handle_correlation(dispatcher, tracker)
-        
-        if intent == "top_locations":
-            return self.handle_top_locations(dispatcher, tracker)
+        try:
+            if intent == "get_metrics":
+                return self.handle_get_metrics(dispatcher, tracker)
 
-        dispatcher.utter_message(text="I couldn't understand the KPI request.")
+            if intent == "rank_metrics":
+                return self.handle_rank_metrics(dispatcher, tracker)
+            
+            if intent == "threshold_metrics":
+                return self.handle_threshold_metrics(dispatcher, tracker)
+            
+            if intent == "compare_metrics":
+                return self.handle_compare_metrics(dispatcher, tracker)
+            
+            if intent == "correlation":
+                return self.handle_correlation(dispatcher, tracker)
+            
+            if intent == "top_locations":
+                return self.handle_top_locations(dispatcher, tracker)
+
+            dispatcher.utter_message(text="I couldn't understand the KPI request.")
+        
+        except Exception as E:
+            logger.exception("ERROR")
+            dispatcher.utter_message(text="Error processing request")
+
+
         return [AllSlotsReset()]
 
 
@@ -182,7 +204,7 @@ class ActionKpiRouter(Action):
 
         if not metric:
             dispatcher.utter_message(text="Please specify which metric you want.")
-            return []
+            return [AllSlotsReset()]
 
         metric_column = METRIC_MAP.get(metric.lower())
         if agg:
@@ -190,7 +212,7 @@ class ActionKpiRouter(Action):
 
         if not metric_column:
             dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
-            return []
+            return [AllSlotsReset()]
         
         query = ""
         filters = ""
@@ -328,13 +350,13 @@ class ActionKpiRouter(Action):
 
         if not metric:
             dispatcher.utter_message(text="Please specify the metric to compare.")
-            return []
+            return [AllSlotsReset()]
 
         metric_column = METRIC_MAP.get(metric.lower())
 
         if not metric_column:
             dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
-            return []
+            return [AllSlotsReset()]
 
         try:
 
@@ -387,7 +409,7 @@ class ActionKpiRouter(Action):
 
             dispatcher.utter_message(text=f"Database error: {str(e)}")
 
-        return []
+        return [AllSlotsReset()]
 
 
     # --------------------------------
@@ -421,13 +443,13 @@ class ActionKpiRouter(Action):
 
         if not metric:
             dispatcher.utter_message(text="Please specify the metric to compare.")
-            return []
+            return [AllSlotsReset()]
         
         metric_column = METRIC_MAP.get(metric.lower())
 
         if not metric_column:
             dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
-            return []
+            return [AllSlotsReset()]
 
 
         filters = f"AND {metric_column} {operator} {threshold}"
@@ -492,7 +514,7 @@ class ActionKpiRouter(Action):
 
             dispatcher.utter_message(text=f"Database error: {str(e)}")
 
-        return []
+        return [AllSlotsReset()]
 
 
 
@@ -528,11 +550,11 @@ class ActionKpiRouter(Action):
                                     metric_column = METRIC_MAP.get(i.lower()) if i != "empty" else i
                                     if not metric:
                                         dispatcher.utter_message(text="Please specify the metric to compare.")
-                                        return []
+                                        return [AllSlotsReset()]
             
                                     if not metric_column:
                                         dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
-                                        return []
+                                        return [AllSlotsReset()]
                                     output_metric = OUTPUT_METRIC_MAP.get(metric_column)
                                     
                                     time_condition = parse_time_condition(j) if j != "empty" else j
@@ -613,7 +635,7 @@ class ActionKpiRouter(Action):
             
             if data == []:
                 dispatcher.utter_message(text="No data found for ranking.")
-                return []
+                return [AllSlotsReset()]
 
                     
             response = f"Following is your requested comparison: \n\n"
@@ -628,7 +650,7 @@ class ActionKpiRouter(Action):
 
             dispatcher.utter_message(text=f"Database error: {str(e)}")
 
-        return []
+        return [AllSlotsReset()]
 
 
     # --------------------------------
@@ -658,11 +680,11 @@ class ActionKpiRouter(Action):
                 metric_column = METRIC_MAP.get(i.lower()) if i != "empty" else i
                 if not metric:
                     dispatcher.utter_message(text="Please specify the metric to compare.")
-                    return []
+                    return [AllSlotsReset()]
 
                 if not metric_column:
                     dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
-                    return []
+                    return [AllSlotsReset()]
                 output_metric = OUTPUT_METRIC_MAP.get(metric_column)
                 
                 time_condition = parse_time_condition(time[0]) if time[0] != "empty" else "empty"
@@ -715,7 +737,7 @@ class ActionKpiRouter(Action):
             
             if data == []:
                 dispatcher.utter_message(text="No data found for correlation.")
-                return []
+                return [AllSlotsReset()]
 
                     
             response = f"Correlation between both the metrics: \n\n"
@@ -730,7 +752,7 @@ class ActionKpiRouter(Action):
 
             dispatcher.utter_message(text=f"Database error: {str(e)}")
 
-        return []
+        return [AllSlotsReset()]
     
     # --------------------------------
     # TOP LOCATIONS
@@ -765,13 +787,13 @@ class ActionKpiRouter(Action):
 
         if not metric:
             dispatcher.utter_message(text="Please specify the metric to compare.")
-            return []
+            return [AllSlotsReset()]
 
         metric_column = METRIC_MAP.get(metric.lower())
 
         if not metric_column:
             dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
-            return []
+            return [AllSlotsReset()]
 
         try:
 
@@ -816,7 +838,7 @@ class ActionKpiRouter(Action):
 
             if not rows:
                 dispatcher.utter_message(text="No data found for top location.")
-                return []
+                return [AllSlotsReset()]
 
             response = f"Ranking top {topN} {dimension} by {metric} in {time}\n\n"
 
@@ -839,7 +861,7 @@ class ActionKpiRouter(Action):
 
             dispatcher.utter_message(text=f"Database error: {str(e)}")
 
-        return []
+        return [AllSlotsReset()]
 
 
 
