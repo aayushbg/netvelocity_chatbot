@@ -100,6 +100,11 @@ def parse_time_condition(time_text):
     if "last 90 days" in time_text:
         start = today - timedelta(days=90)
         return f"CREATEDON >= '{start.date()}'"
+    
+    splt = str(time_text).split()
+    if((splt[0] == "last") and ("day" in splt[2])):
+        start = today - timedelta(days=int(splt[1]))
+        return f"CREATEDON >= '{start.date()}'"
 
     if "yesterday" in time_text:
         start = today - timedelta(days=1)
@@ -151,6 +156,12 @@ class ActionKpiRouter(Action):
         
         if intent == "compare_metrics":
             return self.handle_compare_metrics(dispatcher, tracker)
+        
+        if intent == "correlation":
+            return self.handle_correlation(dispatcher, tracker)
+        
+        if intent == "top_locations":
+            return self.handle_top_locations(dispatcher, tracker)
 
         dispatcher.utter_message(text="I couldn't understand the KPI request.")
         return [AllSlotsReset()]
@@ -393,12 +404,12 @@ class ActionKpiRouter(Action):
 
         user_message = tracker.latest_message.get("text")
         operator = '='
-        for i in len(user_message):
+        for i in range(len(user_message)):
             if(i + 1 < len(user_message) and (user_message[i:i+2] == '<=' or user_message[i:i+2] == '>=')):
-                operator = str(user_message[i+i+2])
+                operator = str(user_message[i:i+2])
                 break
-            elif(i in ['<', '>', '=']):
-                operator = str(i)
+            elif(user_message[i] in ['<', '>', '=']):
+                operator = str(user_message[i])
                 break
 
 
@@ -494,9 +505,9 @@ class ActionKpiRouter(Action):
         metric = tracker.get_slot("metric") if tracker.get_slot("metric") is not None else ["empty"]
         time = tracker.get_slot("time") if tracker.get_slot("time") is not None else ["empty"]
         geo = tracker.get_slot("geo") if tracker.get_slot("geo") is not None else ["empty"]
-        app = tracker.get_slot("app")[0] if tracker.get_slot("app") is not None else ["empty"]
-        band = tracker.get_slot("band")[0] if tracker.get_slot("band") is not None else ["empty"]
-        tech = tracker.get_slot("tech")[0] if tracker.get_slot("tech") is not None else ["empty"]
+        app = tracker.get_slot("app") if tracker.get_slot("app") is not None else ["empty"]
+        band = tracker.get_slot("band") if tracker.get_slot("band") is not None else ["empty"]
+        tech = tracker.get_slot("tech") if tracker.get_slot("tech") is not None else ["empty"]
 
         logger.debug(f"CompareMetrics-1")
 
@@ -620,6 +631,215 @@ class ActionKpiRouter(Action):
         return []
 
 
+    # --------------------------------
+    # CORRELATION METRICS
+    # --------------------------------
+
+    def handle_correlation(self, dispatcher, tracker):
+
+        metric = tracker.get_slot("metric") if tracker.get_slot("metric") is not None else ["empty"]
+        time = tracker.get_slot("time") if tracker.get_slot("time") is not None else ["empty"]
+        geo = tracker.get_slot("geo") if tracker.get_slot("geo") is not None else ["empty"]
+        app = tracker.get_slot("app")[0] if tracker.get_slot("app") is not None else ["empty"]
+        band = tracker.get_slot("band")[0] if tracker.get_slot("band") is not None else ["empty"]
+        tech = tracker.get_slot("tech")[0] if tracker.get_slot("tech") is not None else ["empty"]
+
+        logger.debug(f"CorrelationMetrics-1")
+
+        try:
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            logger.debug(f"CorrelationMetrics-2")
+            data = []
+
+            for i in metric:
+                metric_column = METRIC_MAP.get(i.lower()) if i != "empty" else i
+                if not metric:
+                    dispatcher.utter_message(text="Please specify the metric to compare.")
+                    return []
+
+                if not metric_column:
+                    dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
+                    return []
+                output_metric = OUTPUT_METRIC_MAP.get(metric_column)
+                
+                time_condition = parse_time_condition(time[0]) if time[0] != "empty" else "empty"
+
+                logger.debug(f"CorrelationMetrics-3")
+
+                filters = " "
+                selectors = " "
+                if time_condition != "empty":
+                    filters += f""" AND {time_condition}"""
+                    logger.debug(f"CorrelationMetrics-31")
+                if geo[0] != "empty":
+                    filters += f" AND GEOGRAPHY_NAME = '{geo[0]}'"
+                    selectors += f"""GEOGRAPHY_NAME AS "Location","""
+                    logger.debug(f"CompareMetrics-32")
+                if app[0] != "empty":
+                    filters += f" AND TESTTYPE = '{app[0]}'"
+                    selectors += f"""TESTTYPE AS "App","""
+                if band[0] != "empty":
+                    filters += f" AND BAND = '{band[0]}'"
+                    selectors += f"""BAND AS Band,"""
+                if tech[0] != "empty":
+                    filters += f" AND NETWORKTYPE = '{tech[0]}'"
+                    selectors += f"""NETWORKTYPE AS "Network Type" """
+
+                if selectors[-1] == ',':
+                    selectors = selectors[:len(selectors)-1]
+
+                logger.debug(f"CorrelationMetrics-4")
+
+                query = f"""
+                    SELECT 
+                        AVG({metric_column}) AS "{output_metric}",
+                        {selectors}
+                    FROM netvelocity_kpi_metrics 
+                    WHERE 1=1 {filters}
+                """
+                logger.debug(f"CorrelationMetrics-Query: {query}")
+
+                cursor.execute(query)
+
+                rows = cursor.fetchall()
+
+                for r in rows:
+                    row_data = {}
+
+                    row_data[output_metric] = round(r[0], 2) if r[0] is not None else None
+
+                    data.append(row_data)
+            
+            if data == []:
+                dispatcher.utter_message(text="No data found for correlation.")
+                return []
+
+                    
+            response = f"Correlation between both the metrics: \n\n"
+            response += json.dumps(data)
+
+            dispatcher.utter_message(text=response)
+
+            cursor.close()
+            conn.close()
+
+        except Exception as e:
+
+            dispatcher.utter_message(text=f"Database error: {str(e)}")
+
+        return []
+    
+    # --------------------------------
+    # TOP LOCATIONS
+    # --------------------------------
+
+    def handle_top_locations(self, dispatcher, tracker):
+
+        metric = tracker.get_slot("metric")[0] if tracker.get_slot("metric") is not None else None
+        topN = tracker.get_slot("topN")[0] if tracker.get_slot("topN") is not None else None
+        dimension = tracker.get_slot("dimension")[0] if tracker.get_slot("dimension") is not None else None
+        time = tracker.get_slot("time")[0] if tracker.get_slot("time") is not None else None
+
+        logger.debug(f"topN - {topN}")
+        # order = "DESC"
+        # if(topN.split()[0] in ['bottom', 'lowest'] and metric in ['latency']):
+        #     order = "DESC"
+        # elif(topN.split()[0] in ['bottom', 'lowest'] and metric not in ['latency']):
+        #     order = "ASC"
+        # elif(metric in ['latency']):
+        #     order = "ASC"
+        topN = int(topN.split()[1])
+        logger.debug(f"dimension - {dimension}")
+
+        time_condition = parse_time_condition(time)
+
+        dimension_column = DIMENSION_MAP.get(dimension.lower())
+
+        filters = f"""AND GEOGRAPHYNAME = '{dimension_column}'"""
+        if time_condition:
+            filters += "AND "
+            filters += time_condition
+
+        if not metric:
+            dispatcher.utter_message(text="Please specify the metric to compare.")
+            return []
+
+        metric_column = METRIC_MAP.get(metric.lower())
+
+        if not metric_column:
+            dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
+            return []
+
+        try:
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            query=""
+            if metric_column == "Users":
+                query = f"""
+                    SELECT
+                        GEOGRAPHY_NAME AS Location,
+                        AVG(
+                            COALESCE(ENTERPRISEUC, 0) +
+                            COALESCE(ANDROIDUC, 0) +
+                            COALESCE(IOSUC, 0) +
+                            COALESCE(CONSUMERUC, 0)
+                        ) AS User_Count
+                    FROM netvelocity_user_metrics
+                    WHERE 1=1 {filters} 
+                    GROUP BY GEOGRAPHY_NAME
+                    ORDER BY User_Count DESC
+                    LIMIT {topN};
+                """
+            elif metric_column == "Tests":
+                query = f"""
+                    SELECT
+                        GEOGRAPHY_NAME AS Location,
+                        COUNT(*) AS Record_Count
+                    FROM netvelocity_user_metrics
+                    WHERE 1=1 {filters}
+                    GROUP BY GEOGRAPHY_NAME
+                    ORDER BY Record_Count DESC
+                    LIMIT {topN};
+                """
+            
+
+            logger.debug(f"TopLocations-Query: {query}")
+
+            cursor.execute(query)
+
+            rows = cursor.fetchall()
+
+            if not rows:
+                dispatcher.utter_message(text="No data found for top location.")
+                return []
+
+            response = f"Ranking top {topN} {dimension} by {metric} in {time}\n\n"
+
+            data = []
+            metric = OUTPUT_METRIC_MAP.get(metric_column)
+            for r in rows:
+                data.append({
+                    "Location": r[0],
+                    f"{metric}": round(r[1], 2) if r[1] else None
+                })
+
+            response += json.dumps(data)
+
+            dispatcher.utter_message(text=response)
+
+            cursor.close()
+            conn.close()
+
+        except Exception as e:
+
+            dispatcher.utter_message(text=f"Database error: {str(e)}")
+
+        return []
 
 
 

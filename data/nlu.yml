@@ -73,6 +73,27 @@ nlu:
     - lte vs nr latency in Mumbai last 30 days
     - band 1800 vs 2300 speed in Delhi last 7 days 
 
+- intent: correlation
+  examples: |
+    - Correlation between [download speed](metric) and [SINR](metric) in [Jaipur](geo) for [last 7 days](time)
+    - Does [RSRP](metric) impact [latency](metric) for [LTE](tech) [1800](band) in [Patna](geo) for [last 15 days](time)
+    - Correlation between [SINR](metric) and [download speed](metric) in Zone: [East](geo), NR All Bands, [last 90 days](time)
+
+- intent: top_locations
+  examples: |
+    - [Top 10](topN) [cities][dimension] by Number of [Speed Tests](metric) for [HelloJio SpeedTest](app), [last 24 hours](time)
+    - [Top 10](topN) [cities][dimension] by Number of [Speed Tests](metric) for [All](app) apps in [last 30 days](time)
+    - [Top 10](topN) [cities][dimension] by Number of [Speed Tests](metric) for [All](app) apps in [last 7 days](time)
+    - [Top 10](topN) [cities][dimension] by Number of [Speed Tests](metric) for [NV SpeedTest](app) apps in [last 7 days](time)
+    - [Top 10](topN) [cities][dimension] by Number of [Speed Tests](metric) for [NV SpeedTest](app) apps in [last 30 days](time)
+    - [Top 10](topN) [states][dimension] by Number of [Users](metric) in [last 30 days](time)
+    - [Top 10](topN) [states][dimension] by Number of [Users](metric) in [last 7 days](time)
+    - [Top 10](topN) [zones][dimension] by Number of [Users](metric) in [last 30 days](time)
+    - [Top 10](topN) [zones][dimension] by Number of [Users](metric) in [last 7 days](time)
+    - [Top 10](topN) [JC][dimension] by Number of [Users](metric) in [last 30 days](time)
+    - [Top 10](topN) [JCs][dimension] by Number of [Users](metric) in [last 7 days](time)
+
+
 - lookup: metric
   examples: |
     - download speed
@@ -149,6 +170,20 @@ nlu:
     - Uttar Pradesh
     - Uttarakhand
     - West Bengal
+
+- lookup: band
+  examples: |
+    - 850
+    - 1800
+    - 2300
+    - n28
+    - n78
+    - All
+    - all
+  
+- regex:
+  examples: |
+    - \b(850|1800|2300|n28|n78|all)\b
 
 - lookup: app
   examples: |

@@ -30,3 +30,13 @@ rules:
   steps:
     - intent: compare_metrics
     - action: action_kpi_router
+
+- rule: Handle metric correlation requests
+  steps:
+    - intent: correlation
+    - action: action_kpi_router
+
+- rule: Handle top locations requests
+  steps:
+    - intent: top_locations
+    - action: action_kpi_router
