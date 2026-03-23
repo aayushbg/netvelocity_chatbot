@@ -40,3 +40,8 @@ rules:
   steps:
     - intent: top_locations
     - action: action_kpi_router
+
+- rule: Handle metric breakdown requests
+  steps:
+    - intent: breakdown_metrics
+    - action: action_kpi_router

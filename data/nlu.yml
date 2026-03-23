@@ -93,6 +93,38 @@ nlu:
     - [Top 10](topN) [JC][dimension] by Number of [Users](metric) in [last 30 days](time)
     - [Top 10](topN) [JCs][dimension] by Number of [Users](metric) in [last 7 days](time)
 
+- intent: breakdown_metrics
+  examples: |
+    - breakdown of [rsrp](metric), in [Ahmedabad](geo) during [last 30 days](time)
+    - breakdown of [sinr](metric), in [Mumbai](geo) during [last 7 days](time)
+    - breakdown of [latency](metric), in [Delhi](geo) during [last 30 days](time)
+    - breakdown of [coverage](metric), in [Pune](geo) during [last 7 days](time)
+    - breakdown of [download speed](metric), in [Bangalore](geo) during [last 14 days](time)
+    - breakdown of [upload speed](metric), in [Chennai](geo) during [last 30 days](time)
+    - breakdown of [packet loss](metric), in [Kolkata](geo) during [last 7 days](time)
+    - breakdown of [rsrp](metric) for [LTE](tech), in [Ahmedabad](geo) during [last 30 days](time)
+    - breakdown of [sinr](metric) for [NR NSA](tech), in [Mumbai](geo) during [last 7 days](time)
+    - breakdown of [latency](metric) for [WiFi](tech), in [Delhi](geo) during [last 30 days](time)
+    - breakdown of [coverage](metric) for [1800](band), in [Pune](geo) during [last 7 days](time)
+    - breakdown of [download speed](metric) for [n78](band), in [Bangalore](geo) during [last 14 days](time)
+    - breakdown of [upload speed](metric) for [LTE](tech) [1800](band), in [Ahmedabad](geo) during [last 30 days](time)
+    - breakdown of [packet loss](metric) for [NR NSA](tech) [n78](band), in [Mumbai](geo) during [last 7 days](time)
+    - breakdown of [rsrp](metric) for [LTE](tech) and [NR NSA](tech), in [Delhi](geo) during [last 30 days](time)
+    - breakdown of [sinr](metric) for [2G](tech), [3G](tech) and [LTE](tech), in [Pune](geo) during [last 7 days](time)
+    - breakdown of [latency](metric) for [850](band) and [1800](band), in [Ahmedabad](geo) during [last 30 days](time)
+    - breakdown of [coverage](metric) for [n28](band) and [n78](band), in [Mumbai](geo) during [last 7 days](time)
+    - breakdown of [download speed](metric) for [LTE](tech) and [NR NSA](tech) [1800](band) and [n78](band), in [Delhi](geo) during [last 30 days](time)
+    - breakdown of [upload speed](metric) for [WiFi](tech) and [LTE](tech) [1800](band), in [Bangalore](geo) during [last 14 days](time)
+    - breakdown of [packet loss](metric) for [3G](tech) [850](band) and [1800](band), in [Chennai](geo) during [last 30 days](time)
+    - breakdown of [rsrp](metric) for [All](tech), in [India](geo) during [last 30 days](time)
+    - breakdown of [sinr](metric) for [all](band), in [Mumbai](geo) during [last 7 days](time)
+    - breakdown of [latency](metric) for [All](tech) [all](band), in [Delhi](geo) during [last 30 days](time)
+    - breakdown of [coverage](metric), in [Ahmedabad](geo) and [Surat](geo) during [last 30 days](time)
+    - breakdown of [download speed](metric) for [LTE](tech), in [Mumbai](geo) and [Pune](geo) during [last 7 days](time)
+    - show breakdown of [upload speed](metric) in [Ahmedabad](geo) during [last 30 days](time)
+    - give breakdown of [packet loss](metric) during [last 7 days](time) in [Mumbai](geo) for [NR NSA](tech)
+    - i want breakdown of [rsrp](metric) in [Delhi](geo) during [last 30 days](time) for [1800](band)
+
 
 - lookup: metric
   examples: |

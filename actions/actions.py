@@ -10,7 +10,7 @@ import re
 import sys
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 
 if not logger.handlers:
     handler = logging.StreamHandler(sys.stdout)
@@ -137,6 +137,27 @@ def get_db_connection():
     )
 
 
+def build_nv_response(tracker, metric, data, message):
+
+    intent_name = tracker.latest_message["intent"].get("name")
+    tech = tracker.get_slot("tech")[0] if tracker.get_slot("tech") is not None else None
+
+    response = {
+        "intent": intent_name,
+        "confidence": 1.0,
+        "technology": tech,
+        "module": "NV dash",
+        "metric": metric,
+        "message": message,
+        "data": data,
+        "is_report": False,
+        "file_path": None,
+        "export_type": None
+    }
+
+    return json.dumps(response)
+
+
 # ---------------------------------------------------
 # KPI ROUTER ACTION
 # ---------------------------------------------------
@@ -178,6 +199,11 @@ class ActionKpiRouter(Action):
             
             if intent == "top_locations":
                 return self.handle_top_locations(dispatcher, tracker)
+            
+            if intent == "breakdown_metrics":
+                return self.handle_breakdown_metrics(dispatcher, tracker)
+            
+            
 
             dispatcher.utter_message(text="I couldn't understand the KPI request.")
         
@@ -303,7 +329,7 @@ class ActionKpiRouter(Action):
 
             
 
-            dispatcher.utter_message(text=response)
+            dispatcher.utter_message(text=build_nv_response(tracker, metric_column, value, response))
 
             cursor.close()
             conn.close()
@@ -400,7 +426,7 @@ class ActionKpiRouter(Action):
 
             response += json.dumps(data)
 
-            dispatcher.utter_message(text=response)
+            dispatcher.utter_message(text=build_nv_response(tracker, metric_column, json.dumps(data), response))
 
             cursor.close()
             conn.close()
@@ -505,7 +531,7 @@ class ActionKpiRouter(Action):
 
             response += json.dumps(data)
 
-            dispatcher.utter_message(text=response)
+            dispatcher.utter_message(text=build_nv_response(tracker, metric_column, json.dumps(data), response))
 
             cursor.close()
             conn.close()
@@ -641,7 +667,7 @@ class ActionKpiRouter(Action):
             response = f"Following is your requested comparison: \n\n"
             response += json.dumps(data)
 
-            dispatcher.utter_message(text=response)
+            dispatcher.utter_message(text=build_nv_response(tracker, metric_column, json.dumps(data), response))
 
             cursor.close()
             conn.close()
@@ -722,7 +748,7 @@ class ActionKpiRouter(Action):
                     FROM netvelocity_kpi_metrics 
                     WHERE 1=1 {filters}
                 """
-                logger.debug(f"CorrelationMetrics-Query: {query}")
+                logger.info(f"CorrelationMetrics-Query: {query}")
 
                 cursor.execute(query)
 
@@ -743,7 +769,7 @@ class ActionKpiRouter(Action):
             response = f"Correlation between both the metrics: \n\n"
             response += json.dumps(data)
 
-            dispatcher.utter_message(text=response)
+            dispatcher.utter_message(text=build_nv_response(tracker, metric_column, json.dumps(data), response))
 
             cursor.close()
             conn.close()
@@ -852,7 +878,142 @@ class ActionKpiRouter(Action):
 
             response += json.dumps(data)
 
-            dispatcher.utter_message(text=response)
+            dispatcher.utter_message(text=build_nv_response(tracker, metric_column, json.dumps(data), response))
+
+            cursor.close()
+            conn.close()
+
+        except Exception as e:
+
+            dispatcher.utter_message(text=f"Database error: {str(e)}")
+
+        return [AllSlotsReset()]
+
+
+    # --------------------------------
+    # BREAKDOWN METRICS
+    # --------------------------------
+
+    def handle_breakdown_metrics(self, dispatcher, tracker):
+
+        metric = tracker.get_slot("metric") if tracker.get_slot("metric") is not None else ["empty"]
+        time = tracker.get_slot("time") if tracker.get_slot("time") is not None else ["empty"]
+        geo = tracker.get_slot("geo") if tracker.get_slot("geo") is not None else ["empty"]
+        app = tracker.get_slot("app") if tracker.get_slot("app") is not None else ["empty"]
+        band = tracker.get_slot("band") if tracker.get_slot("band") is not None else ["empty"]
+        tech = tracker.get_slot("tech") if tracker.get_slot("tech") is not None else ["empty"]
+
+        logger.debug(f"BreakdownMetrics-1")
+
+        try:
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            logger.debug(f"BreakdownMetrics-2")
+            data = []
+
+            for i in metric:
+                for j in time:
+                    for k in geo:
+                        for m in app:
+                            for n in band:
+                                for p in tech:
+                                    metric_column = METRIC_MAP.get(i.lower()) if i != "empty" else i
+                                    if not metric:
+                                        dispatcher.utter_message(text="Please specify the metric to compare.")
+                                        return [AllSlotsReset()]
+            
+                                    if not metric_column:
+                                        dispatcher.utter_message(text=f"Metric '{metric}' is not supported.")
+                                        return [AllSlotsReset()]
+                                    output_metric = OUTPUT_METRIC_MAP.get(metric_column)
+                                    
+                                    time_condition = parse_time_condition(j) if j != "empty" else j
+
+                                    logger.debug(f"BreakdownMetrics-3")
+
+                                    filters = " "
+                                    selectors = " "
+                                    if time_condition != "empty":
+                                        filters += f""" AND {time_condition}"""
+                                        logger.debug(f"BreakdownMetrics-31")
+                                    if k != "empty":
+                                        filters += f" AND GEOGRAPHY_NAME = '{k}'"
+                                        selectors += f"""GEOGRAPHY_NAME AS "Location","""
+                                        logger.debug(f"BreakdownMetrics-32")
+                                    if m != "empty":
+                                        filters += f" AND TESTTYPE = '{m}'"
+                                        selectors += f"""TESTTYPE AS "App","""
+                                    if n != "empty":
+                                        filters += f" AND BAND = '{n}'"
+                                        selectors += f"""BAND AS Band,"""
+                                    if p != "empty":
+                                        filters += f" AND NETWORKTYPE = '{p}'"
+                                        selectors += f"""NETWORKTYPE AS "Network Type" """
+
+                                    if selectors[-1] == ',':
+                                        selectors = selectors[:len(selectors)-1]
+
+                                    logger.debug(f"BreakdownMetrics-4")
+
+                                    query = f"""
+                                        SELECT 
+                                            AVG({metric_column}) AS "{output_metric}",
+                                            {selectors}
+                                        FROM netvelocity_kpi_metrics 
+                                        WHERE 1=1 {filters}
+                                    """
+                                    logger.debug(f"BreakdownMetrics-Query: {query}")
+
+                                    cursor.execute(query)
+
+                                    rows = cursor.fetchall()
+
+                                    for r in rows:
+                                        row_data = {}
+
+                                        row_data[output_metric] = round(r[0], 2) if r[0] is not None else None
+
+                                        idx = 1
+
+                                        if k != "empty":
+                                            row_data["Location"] = r[idx]
+                                            idx += 1
+
+                                        if m != "empty":
+                                            row_data["App"] = r[idx]
+                                            idx += 1
+
+                                        if n != "empty":
+                                            row_data["Band"] = r[idx]
+                                            idx += 1
+
+                                        if p != "empty":
+                                            row_data["Network Type"] = r[idx]
+                                            idx += 1
+
+                                        data.append(row_data)
+
+                                    # for r in rows:
+                                    #     data.append({
+                                    #         f"{output_metric}": round(r[0], 2) if r[0] else None,
+                                    #         f"Date": r[1],
+                                    #         f"Location": r[2],
+                                    #         f"App": r[3],
+                                    #         f"Band": r[4],
+                                    #         f"Network Type": r[5],
+                                    #     })
+            
+            if data == []:
+                dispatcher.utter_message(text="No data found for ranking.")
+                return [AllSlotsReset()]
+
+                    
+            response = f"Following is your requested comparison: \n\n"
+            response += json.dumps(data)
+
+            dispatcher.utter_message(text=build_nv_response(tracker, metric_column, json.dumps(data), response))
 
             cursor.close()
             conn.close()

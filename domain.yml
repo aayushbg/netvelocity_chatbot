@@ -14,6 +14,7 @@ intents:
   - compare_metrics
   - correlation
   - top_locations
+  - breakdown_metrics
 
 entities:
   - metric
